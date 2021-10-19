@@ -96,7 +96,7 @@ pub fn process_instruction(
 
         GovernanceInstruction::SetGovernanceDelegate {
             new_governance_delegate,
-        } => process_set_governance_delegate(program_id, accounts, &new_governance_delegate),
+        } => process_set_governance_delegate(program_id, accounts, &new_governance_delegate), //dboures
 
         GovernanceInstruction::CreateProgramGovernance {
             config,

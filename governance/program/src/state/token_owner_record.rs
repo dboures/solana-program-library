@@ -52,6 +52,7 @@ pub struct TokenOwnerRecord {
     /// Reserved space for future versions
     pub reserved: [u8; 7],
 
+    //dboures
     /// A single account that is allowed to operate governance with the deposited governing tokens
     /// It can be delegated to by the governing_token_owner or current governance_delegate
     pub governance_delegate: Option<Pubkey>,
@@ -69,6 +70,7 @@ impl IsInitialized for TokenOwnerRecord {
     }
 }
 
+//dboures
 impl TokenOwnerRecord {
     /// Checks whether the provided Governance Authority signed transaction
     pub fn assert_token_owner_or_delegate_is_signer(
