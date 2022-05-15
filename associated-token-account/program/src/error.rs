@@ -13,6 +13,10 @@ pub enum AssociatedTokenAccountError {
     /// Associated token account owner does not match address derivation
     #[error("Associated token account owner does not match address derivation")]
     InvalidOwner,
+    // 1
+    /// My Special Error
+    #[error("My Special Error")]
+    MySpecialGuy,
 }
 impl From<AssociatedTokenAccountError> for ProgramError {
     fn from(e: AssociatedTokenAccountError) -> Self {

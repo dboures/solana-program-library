@@ -12,6 +12,7 @@ use {
         transaction::{Transaction, TransactionError},
     },
     spl_associated_token_account::{
+        error::AssociatedTokenAccountError,
         get_associated_token_address_with_program_id, instruction::create_associated_token_account,
     },
     spl_token_2022::{extension::ExtensionType, state::Account},
@@ -312,3 +313,54 @@ async fn test_create_associated_token_account_using_legacy_implicit_instruction(
     assert_eq!(associated_account.owner, spl_token_2022::id());
     assert_eq!(associated_account.lamports, expected_token_account_balance);
 }
+
+#[tokio::test] // cargo test-bpf -- --test test_create_fails_if_wallet_address_is_mint
+async fn test_create_fails_if_wallet_address_is_mint() { // https://github.com/solana-labs/solana-program-library/issues/2911
+    let wallet_address = Pubkey::new_unique();
+    let token_mint_address = wallet_address.clone();
+    let associated_token_address = get_associated_token_address_with_program_id(
+        &wallet_address,
+        &token_mint_address,
+        &spl_token_2022::id(),
+    );
+
+    let (mut banks_client, payer, recent_blockhash) =
+        program_test_2022(token_mint_address, true).start().await;
+
+    // Associated account does not exist
+    assert_eq!(
+        banks_client
+            .get_account(associated_token_address)
+            .await
+            .expect("get_account"),
+        None,
+    );
+
+    let mut transaction = Transaction::new_with_payer(
+        &[create_associated_token_account(
+            &payer.pubkey(),
+            &wallet_address,
+            &token_mint_address,
+            &spl_token_2022::id(),
+        )],
+        Some(&payer.pubkey()),
+    );
+    transaction.sign(&[&payer], recent_blockhash);
+    assert_eq!(
+        banks_client
+            .process_transaction(transaction)
+            .await
+            .unwrap_err()
+            .unwrap(),
+        TransactionError::InstructionError(
+            0,
+            InstructionError::Custom(AssociatedTokenAccountError::MySpecialGuy as u32)
+        )
+    );
+
+}
+
+// #[tokio::test]
+// async fn test_create_fails_other() { //if wallet_address is already initialized by given token_program_id's Account (likely the errorneous nested ata creation attempt).
+    
+// }

@@ -109,6 +109,17 @@ fn process_create_associated_token_account(
         return Err(ProgramError::IllegalOwner);
     }
 
+    // should fail if wallet_address is already initialized by given token_program_id's Account 
+    // if *wallet_account_info.type?? == mint  {
+    //     return Err(ProgramError::IllegalOwner);
+    // }
+
+    if *wallet_account_info.key == *spl_token_mint_info.key  {
+        let error = AssociatedTokenAccountError::MySpecialGuy;
+        msg!("{}", error);
+        return Err(error.into());
+    }
+
     let rent = Rent::get()?;
 
     let associated_token_account_signer_seeds: &[&[_]] = &[
