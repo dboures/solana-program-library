@@ -1,23 +1,22 @@
-import {Account, Connection} from '@solana/web3.js';
+import {Account, Connection, Keypair, sendAndConfirmTransaction, SystemProgram, Transaction} from '@solana/web3.js';
 
 import {sleep} from './sleep';
 
 export async function newAccountWithLamports(
   connection: Connection,
   lamports: number = 1000000,
+  fromKeypair: Keypair
 ): Promise<Account> {
   const account = new Account();
 
-  let retries = 30;
-  await connection.requestAirdrop(account.publicKey, lamports);
-  for (;;) {
-    await sleep(500);
-    if (lamports == (await connection.getBalance(account.publicKey))) {
-      return account;
-    }
-    if (--retries <= 0) {
-      break;
-    }
-  }
-  throw new Error(`Airdrop of ${lamports} failed`);
+  const transferTransaction = new Transaction()
+  .add(SystemProgram.transfer({
+    fromPubkey: fromKeypair.publicKey,
+    toPubkey: account.publicKey,
+    lamports,
+  }))
+
+  await sendAndConfirmTransaction(connection, transferTransaction, [fromKeypair]);
+  console.log(account.secretKey.toString())
+  return account;
 }

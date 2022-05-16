@@ -5,6 +5,7 @@
 use crate::curve::{base::SwapCurve, fees::Fees};
 use crate::error::SwapError;
 use solana_program::{
+    msg,
     instruction::{AccountMeta, Instruction},
     program_error::ProgramError,
     program_pack::Pack,
@@ -190,15 +191,21 @@ pub enum SwapInstruction {
 impl SwapInstruction {
     /// Unpacks a byte buffer into a [SwapInstruction](enum.SwapInstruction.html).
     pub fn unpack(input: &[u8]) -> Result<Self, ProgramError> {
+        msg!("try split_first");
         let (&tag, rest) = input.split_first().ok_or(SwapError::InvalidInstruction)?;
         Ok(match tag {
             0 => {
+                msg!("unpack initialize");
                 if rest.len() >= Fees::LEN {
                     let (fees, rest) = rest.split_at(Fees::LEN);
+                    msg!("split at fees ok fee LEN");
                     let fees = Fees::unpack_unchecked(fees)?;
+                    msg!("unpack fees ok");
                     let swap_curve = SwapCurve::unpack_unchecked(rest)?;
+                    msg!("unpack swap_curve ok");
                     Self::Initialize(Initialize { fees, swap_curve })
                 } else {
+                    msg!("not fee LEN");
                     return Err(SwapError::InvalidInstruction.into());
                 }
             }

@@ -230,11 +230,15 @@ impl Processor {
         if *authority_info.key != swap_authority {
             return Err(SwapError::InvalidProgramAddress.into());
         }
+
+        msg!("unpack tas");
         let token_a = Self::unpack_token_account(token_a_info, &token_program_id)?;
         let token_b = Self::unpack_token_account(token_b_info, &token_program_id)?;
         let fee_account = Self::unpack_token_account(fee_account_info, &token_program_id)?;
         let destination = Self::unpack_token_account(destination_info, &token_program_id)?;
         let pool_mint = Self::unpack_mint(pool_mint_info, &token_program_id)?;
+
+        msg!("unpack is chill");
         if *authority_info.key != token_a.owner {
             return Err(SwapError::InvalidOwner.into());
         }
@@ -986,6 +990,7 @@ impl Processor {
 
     /// Processes an [Instruction](enum.Instruction.html).
     pub fn process(program_id: &Pubkey, accounts: &[AccountInfo], input: &[u8]) -> ProgramResult {
+        msg!("process");
         Self::process_with_constraints(program_id, accounts, input, &SWAP_CONSTRAINTS)
     }
 
@@ -996,6 +1001,7 @@ impl Processor {
         input: &[u8],
         swap_constraints: &Option<SwapConstraints>,
     ) -> ProgramResult {
+        msg!("process with constraints");
         let instruction = SwapInstruction::unpack(input)?;
         match instruction {
             SwapInstruction::Initialize(Initialize { fees, swap_curve }) => {

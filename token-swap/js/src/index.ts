@@ -372,6 +372,7 @@ export class TokenSwap {
     confirmOptions?: ConfirmOptions,
   ): Promise<TokenSwap> {
     let transaction;
+    console.log('try tokenswap')
     const tokenSwap = new TokenSwap(
       connection,
       tokenSwapAccount.publicKey,
@@ -410,7 +411,7 @@ export class TokenSwap {
         programId: swapProgramId,
       }),
     );
-
+      console.log('try instructions')
     const instruction = TokenSwap.createInitSwapInstruction(
       tokenSwapAccount,
       authority,
