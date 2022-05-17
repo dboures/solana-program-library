@@ -222,6 +222,17 @@ fn get_signer(
     })
 }
 
+pub fn get_cli_config(matches: &ArgMatches<'_>) -> solana_cli_config::Config {
+    if let Some(config_file) = matches.value_of("config_file") {
+        solana_cli_config::Config::load(config_file).unwrap_or_else(|_| {
+            eprintln!("error: Could not find config file `{}`", config_file);
+            exit(1);
+        })
+    } else {
+        solana_cli_config::Config::default()
+    }
+}
+
 pub(crate) fn check_fee_payer_balance(config: &Config, required_balance: u64) -> Result<(), Error> {
     let balance = config.rpc_client.get_balance(&config.fee_payer)?;
     if balance < required_balance {
@@ -2538,14 +2549,7 @@ fn main() -> Result<(), Error> {
     let matches = sub_matches.unwrap();
 
     let config = {
-        let cli_config = if let Some(config_file) = matches.value_of("config_file") {
-            solana_cli_config::Config::load(config_file).unwrap_or_else(|_| {
-                eprintln!("error: Could not find config file `{}`", config_file);
-                exit(1);
-            })
-        } else {
-            solana_cli_config::Config::default()
-        };
+        let cli_config = get_cli_config(matches);
         let json_rpc_url = normalize_to_url_if_moniker(
             matches
                 .value_of("json_rpc_url")
@@ -3635,5 +3639,28 @@ mod tests {
         let ui_account = config.rpc_client.get_token_account(&aux).unwrap().unwrap();
         assert_eq!(ui_account.mint, token.to_string());
         assert_eq!(ui_account.owner, aux_string);
+    }
+
+    #[test]
+    fn invalid_config_will_cause_commands_to_fail() {
+
+        let sample_command = vec!["address", "--config", "~/nonexistent/config.yml"];
+
+        let default_decimals = format!("{}", native_mint::DECIMALS);
+        let default_program_id = spl_token::id().to_string();
+        let minimum_signers_help = minimum_signers_help_string();
+        let multisig_member_help = multisig_member_help_string();
+        let app_matches = app(
+            &default_decimals,
+            &default_program_id,
+            &minimum_signers_help,
+            &multisig_member_help,
+        )
+        .get_matches_from(sample_command);
+
+
+        let (_sub_command, sub_matches) = app_matches.subcommand();
+        let matches = sub_matches.unwrap();
+        let config = get_cli_config(matches);
     }
 }
